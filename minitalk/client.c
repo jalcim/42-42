@@ -6,31 +6,36 @@
 /*   By: jalcim <jalcim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2014/08/26 16:33:37 by jalcim            #+#    #+#             */
-/*   Updated: 2014/08/26 19:20:07 by jalcim           ###   ########.fr       */
+/*   Updated: 2014/08/27 18:17:45 by jalcim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct s_object t_object;
 
 struct s_object
 {
 	int pid;
+	int index;
 	char *string;
-}
+};
 
-char*balance(char **buffer, char **tmp, int *compt, int fd);
-char*ft_fd_in_str(int fd);
+char *balance(char **buffer, char **tmp, int *compt, int fd);
+char *ft_fd_in_str(int fd);
 t_object *carbu(t_object *save);
 void error(char *strerr);
-void ok();
+void connect();
+void err_transmit();
 
 int main()
 {
 	t_object *object;
 
-	signal(SIGUSR1, ok);
+	signal(SIGUSR1, connect);
 	signal(SIGUSR2, err_transmit);
 
 	object = (t_object *)malloc(sizeof(t_object));
@@ -39,20 +44,30 @@ int main()
 	scanf("%d", &object->pid);
 
 	printf("entrez la chaine\n");
+
 	object->string = ft_fd_in_str(0);
+
+	object->index = 0;
 	carbu(object);
-	kill(pid, SIGUSR1);
-	sleep(1000);
+
+	printf("signal sended\n");
+	kill(object->pid, SIGUSR1);
+	sleep(500);
 	error("connection error :");
+}
+
+void err_transmit()
+{
+	printf("erreur de transmition\n");
 }
 
 void error(char *strerr)
 {
-	perror();
+	perror(strerr);
 }
 
 
-void ok()
+void connect()
 {
 	t_object *object;
 
@@ -69,42 +84,5 @@ t_object *carbu(t_object *save)
 		object = save;
 	else if (object)
 		return (object);
-	return (NULL);
-}
-
-char *ft_fd_in_str(int fd)
-{
-	char*tmp;
-	char*buffer;
-	intcompt;
-
-	compt = 0;
-	tmp = (char *)malloc(2 * sizeof(char));
-	bzero(tmp, 2);
-	buffer = NULL;
-	read(fd, tmp, 1);
-	tmp[++compt] = '\0';
-	while (42)
-	{
-		if (!buffer)
-		{
-			if (balance(&buffer, &tmp, &compt, fd))
-				return (buffer);
-		}
-		else if (balance(&tmp, &buffer, &compt, fd))
-			return (tmp);
-	}
-}
-
-char *balance(char **buffer, char **tmp, int *compt, int fd)
-{
-	(*buffer) = (char *)malloc(*compt + 2 * sizeof(char));
-	strcpy((*buffer), (*tmp));
-	free((*tmp));
-	(*tmp) = NULL;
-	read(fd, &(*buffer)[*compt], 1);
-	if (!((*buffer)[*compt]))
-		return ((*buffer));
-	(*buffer)[++*compt] = '\0';
 	return (NULL);
 }
